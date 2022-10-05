@@ -1,4 +1,8 @@
-<h1 style="text-align: center;">FFMPEG Video Streams Manager</h1>
+<p align="center">
+  <img src="./FVSM-Info-Img.jpg" alt="Information about this script">
+</p>
+
+<h1 align="center" style="text-align: center;">FFMPEG Video Streams Manager</h1>
 
 <hr>
 

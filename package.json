@@ -1,7 +1,7 @@
 {
   "name": "ffmpeg-video-streams-manager",
   "version": "0.0.1",
-  "description": "",
+  "description": "A simple Node.js script that allows to manipulate streams in an audio / video file.",
   "type": "module",
   "main": "index.js",
   "scripts": {
