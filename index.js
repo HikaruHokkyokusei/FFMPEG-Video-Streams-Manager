@@ -12,6 +12,7 @@ const require = createRequire(import.meta.url);
 const childProcess = require("child_process");
 const config = require("./config.json");
 
+const preventDirectCopyOfNonSeasonFolders = config["preventDirectCopyOfNonSeasonFolders"];
 const isStopWord = config["stopWords"];
 
 const executeCmdScript = (scriptParams, shouldPrint = true, shouldReturn = false, command = "ffmpeg -hide_banner ") => {
@@ -198,6 +199,18 @@ const getDirectoryContent = (baseInputFilePath) => {
 const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operationFunction, ffmpegNonFileParams, currentDepth) => {
     let directoryContent = getDirectoryContent(baseInputFilePath);
     let currentFfmpegNonFileParams = ffmpegNonFileParams;
+
+    let lowerCasePath = baseInputFilePath.toLowerCase();
+    let isSeasonDirectory = preventDirectCopyOfNonSeasonFolders ||
+        (lowerCasePath.lastIndexOf("/ova ") === -1 &&
+            lowerCasePath.lastIndexOf("/ovas ") === -1 &&
+            lowerCasePath.lastIndexOf("/movie ") === -1 &&
+            lowerCasePath.lastIndexOf("/movies ") === -1 &&
+            lowerCasePath.lastIndexOf("/extra ") === -1 &&
+            lowerCasePath.lastIndexOf("/extras ") === -1 &&
+            lowerCasePath.lastIndexOf("/special ") === -1 &&
+            lowerCasePath.lastIndexOf("/specials ") === -1);
+
     for (const element of directoryContent) {
         if (currentDepth < 1 && element.isDir) {
             console.log(`Folder --> ${element.name}`);
@@ -216,7 +229,7 @@ const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operat
                 currentDepth + 1
             );
         } else {
-            if (element.canProcess) {
+            if (element.canProcess && isSeasonDirectory) {
                 if (!currentFfmpegNonFileParams) {
                     currentFfmpegNonFileParams = generateAutoParamsFromFile(baseInputFilePath + element.name);
                 }

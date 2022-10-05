@@ -7,5 +7,6 @@
     ".txt": true,
     ".srt": true,
     ".ass": true
-  }
+  },
+  "preventDirectCopyOfNonSeasonFolders": false
 }

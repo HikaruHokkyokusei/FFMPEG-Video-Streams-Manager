@@ -21,10 +21,27 @@
     <li>Auto: Keep only Japanese audio streams (Read README.md)</li>
 </ul>
 
-I made this for anime, that's why there is that last option in the above list. It is a versatile feature and one might
-want to change it based on their requirements. This option only includes japanese audio and all other types of streams
-are included as it is. There is one more thing here though. If the video contains more than one video tracks, than only
+I made this script for anime episodes and that's why there is that last option in the above list. It is actually a very
+versatile & advanced feature and one might want to change it based on their requirements. This option only includes
+japanese audio streams. All other non-audio streams are included as it is. There is one more thing here though. If the
+video contains more than one video tracks, then only
 the first one is included and others are discarded.
+
+Also, this function will directly copy any files whose extensions are either present in the stop word list or if any of
+the following string is present in the full path of the input file (case-insensitive): -
+<ul>
+    <li><code>/ova </code>></li>
+    <li><code>/ovas </code>></li>
+    <li><code>/movie </code>></li>
+    <li><code>/movies </code>></li>
+    <li><code>/extra </code>></li>
+    <li><code>/extras </code>></li>
+    <li><code>/special </code>></li>
+    <li><code>/specials </code>></li>
+</ul>
+
+Files in such paths are called non season files. This direct copy feature for `Non Season Files` can be turned off using
+the `config.json` file.
 
 ## Input/Output File Paths
 
