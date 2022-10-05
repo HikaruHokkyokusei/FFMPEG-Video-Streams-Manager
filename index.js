@@ -35,8 +35,8 @@ const baseOutputFilePath = config["baseOutputFilePath"] + ((config["baseOutputFi
 
 const menuOptions = [
     "Execute Pre-main function",
-    "Display input file info.",
     "Run manual test command",
+    "Display input file info.",
     "Keep specific subtitle streams only",
     "Keep specific audio streams only",
     "Keep specific subtitle and audio streams only",
@@ -246,16 +246,16 @@ const main = async () => {
             }
 
             case 1: {
-                inputFilePath = getInput("Enter file name: ");
-                executeCmdScript(['-i', `"${baseInputFilePath}${inputFilePath}"`, '2>&1', '|', 'find', '"Stream"']);
+                let userCommand = getInput("Enter command: ");
+                userCommand = userCommand.replaceAll("$iB$/", baseInputFilePath);
+                userCommand = userCommand.replaceAll("$oB$/", baseOutputFilePath);
+                executeCmdScript([userCommand], true, false, "");
                 continue;
             }
 
             case 2: {
-                let userCommand = getInput("Enter command: ");
-                userCommand = userCommand.replaceAll("$iB$/", baseInputFilePath);
-                userCommand = userCommand.replaceAll("$oB$/", baseOutputFilePath);
-                executeCmdScript([userCommand]);
+                inputFilePath = getInput("Enter file name: ");
+                executeCmdScript(['-i', `"${baseInputFilePath}${inputFilePath}"`, '2>&1', '|', 'find', '"Stream"']);
                 continue;
             }
 
