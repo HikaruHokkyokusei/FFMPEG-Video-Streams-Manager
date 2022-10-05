@@ -6,10 +6,13 @@
 
 import {createRequire} from "module";
 import readLine from "readline-sync";
+import * as fs from "fs";
 
 const require = createRequire(import.meta.url);
 const childProcess = require("child_process");
 const config = require("./config.json");
+
+const isStopWord = config["stopWords"];
 
 const executeCmdScript = (scriptParams, shouldPrint = true, shouldReturn = false, command = "ffmpeg -hide_banner ") => {
     for (const param of scriptParams) {
@@ -19,6 +22,7 @@ const executeCmdScript = (scriptParams, shouldPrint = true, shouldReturn = false
 
     if (shouldPrint) {
         console.log(result);
+        console.log("");
     }
 
     if (shouldReturn) {
@@ -106,7 +110,13 @@ const generateAutoParamsFromFile = (sampleFile) => {
     ];
 
     console.log("Detected Streams: ");
-    console.log(streamList);
+    for (const stream of streamList) {
+        if (typeof stream === "string") {
+            console.log(stream);
+        } else {
+            console.log(stream["Full Details"]);
+        }
+    }
 
     let selectedStreams = "";
     for (const streamListElement of streamList) {
@@ -130,7 +140,7 @@ const generateAutoParamsFromFile = (sampleFile) => {
 
     let shouldSatisfy = true;
     while (shouldSatisfy) {
-        console.log(`Currently Selected Streams: ${selectedStreams}`);
+        console.log(`Currently Selected Streams: ${selectedStreams} (Streams that are not video, audio or subtitles are auto included.)`);
         if (readLine.keyInYN("Are you satisfied with the currently selected streams?")) {
             shouldSatisfy = !shouldSatisfy;
         } else {
@@ -144,15 +154,56 @@ const generateAutoParamsFromFile = (sampleFile) => {
 
     return ffmpegNonFileParams;
 };
-
-const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operation, ffmpegNonFileParams, currentDepth) => {
-    // TODO: Complete this...
-};
 const executeGenericFfmpegScript = (baseInputFilePath, inputFilePath, ffmpegNonFIleParams, baseOutputFilePath, outputFilePath) => {
     if (outputFilePath === "*") {
         outputFilePath = inputFilePath;
     }
-    executeCmdScript([`-i ${baseInputFilePath + inputFilePath}`, ...ffmpegNonFIleParams, `-c copy ${baseOutputFilePath + outputFilePath}`]);
+    executeCmdScript([`-i "${baseInputFilePath + inputFilePath}"`, ...ffmpegNonFIleParams, `-c copy "${baseOutputFilePath + outputFilePath}"`]);
+};
+
+const getDirectoryContent = (baseInputFilePath) => {
+    return fs.readdirSync(baseInputFilePath, {withFileTypes: true}).map((d) => {
+        let lastIndex = d.name.lastIndexOf(".");
+        let extension = (lastIndex > -1) ? d.name.substring(lastIndex) : null;
+        return {
+            "name": d.name,
+            "extension": extension,
+            "isDir": d.isDirectory(),
+            "canProcess": extension != null && !isStopWord[extension]
+        };
+    });
+};
+const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operationFunction, ffmpegNonFileParams, currentDepth) => {
+    let directoryContent = getDirectoryContent(baseInputFilePath);
+    let currentFfmpegNonFileParams = ffmpegNonFileParams;
+    for (const element of directoryContent) {
+        if (currentDepth < 1 && element.isDir) {
+            console.log(`Folder --> ${element.name}`);
+            if (!readLine.keyInYN("Do you want to continue?")) {
+                break;
+            }
+            console.log("");
+        }
+        if (element.isDir) {
+            fs.mkdirSync(baseOutputFilePath + element.name);
+            operateOnFilesRecursively(
+                `${baseInputFilePath + element.name}/`,
+                `${baseOutputFilePath + element.name}/`,
+                operationFunction,
+                ffmpegNonFileParams,
+                currentDepth + 1
+            );
+        } else {
+            if (element.canProcess) {
+                if (!currentFfmpegNonFileParams) {
+                    currentFfmpegNonFileParams = generateAutoParamsFromFile(baseInputFilePath + element.name);
+                }
+                operationFunction(baseInputFilePath, element.name, currentFfmpegNonFileParams, baseOutputFilePath, element.name);
+            } else {
+                fs.copyFileSync(baseInputFilePath + element.name, baseOutputFilePath + element.name, fs.constants.COPYFILE_EXCL);
+            }
+        }
+    }
 };
 
 const preMain = async () => {
@@ -166,7 +217,7 @@ const preMain = async () => {
 const main = async () => {
     console.log("Script started");
     console.log("Ensure that FFMPEG is installed and is set in the env. path variables.\n");
-    console.log(`Based on the config file, inp. files needs to be in "${baseInputFilePath}" and out. files will be stored in "${baseOutputFilePath}"\n`);
+    console.log(`Based on the config file, i/p files needs to be in "${baseInputFilePath}" and o/p. files will be stored in "${baseOutputFilePath}"\n`);
 
     while (true) {
         let choice = showMenu();

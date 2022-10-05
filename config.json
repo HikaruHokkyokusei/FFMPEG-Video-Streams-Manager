@@ -1,4 +1,11 @@
 {
-  "baseInputFilePath": "./Files/Input",
-  "baseOutputFilePath": "./Files/Output"
+  "baseInputFilePath": "./Files/Input/",
+  "baseOutputFilePath": "./Files/Output/",
+  "stopWords": {
+    ".ini": true,
+    ".ico": true,
+    ".txt": true,
+    ".srt": true,
+    ".ass": true
+  }
 }
