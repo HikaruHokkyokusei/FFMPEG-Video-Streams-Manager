@@ -18,11 +18,13 @@
     <li>Remove specific subtitle and audio streams</li>
     <li>Keep specific streams only</li>
     <li>Remove specific streams</li>
-    <li>Auto: Keep only Japanese audio & English subtitle streams</li>
+    <li>Auto: Keep only Japanese audio streams (Read README.md)</li>
 </ul>
 
 I made this for anime, that's why there is that last option in the above list. It is a versatile feature and one might
-want to change it based on their requirements.
+want to change it based on their requirements. This option only includes japanese audio and all other types of streams
+are included as it is. There is one more thing here though. If the video contains more than one video tracks, than only
+the first one is included and others are discarded.
 
 ## Input/Output File Paths
 

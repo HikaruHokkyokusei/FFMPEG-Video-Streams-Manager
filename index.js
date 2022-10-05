@@ -45,7 +45,7 @@ const menuOptions = [
     "Remove specific subtitle and audio streams",
     "Keep specific streams only",
     "Remove specific streams",
-    "Auto: Keep only Japanese audio & English subtitle streams"
+    "Auto: Keep only Japanese audio streams (Read README.md)"
 ];
 const showMenu = () => {
     console.log("Menu: -");
@@ -119,16 +119,34 @@ const generateAutoParamsFromFile = (sampleFile) => {
     }
     console.log("");
 
+    let firstAudioStreamIndex = null, hasSelectedAudioStream = false;
+    let isFirstVideoStream = true;
     let selectedStreams = "";
+
     for (const streamListElement of streamList) {
         if (typeof streamListElement === "object") {
-            if (streamListElement["Stream Type"] === "video" && streamListElement["Stream Index"] === "0") {
+            if (streamListElement["Stream Type"] === "video") {
+                if (isFirstVideoStream) {
+                    selectedStreams += `${streamListElement["Stream Index"]} `;
+                    isFirstVideoStream = false;
+                }
+            } else if (streamListElement["Stream Type"] === "subtitle") {
                 selectedStreams += `${streamListElement["Stream Index"]} `;
-            } else if (streamListElement["Is Japanese"] != null) {
-                if (streamListElement["Stream Type"] === "audio" && streamListElement["Is Japanese"]) {
-                    selectedStreams += `${streamListElement["Stream Index"]} `;
-                } else if (streamListElement["Stream Type"] === "subtitle" && !streamListElement["Is Japanese"]) {
-                    selectedStreams += `${streamListElement["Stream Index"]} `;
+            } else if (streamListElement["Stream Type"] === "audio") {
+                if (!firstAudioStreamIndex) {
+                    firstAudioStreamIndex = streamListElement["Stream Index"];
+                }
+                if (streamListElement["Is Japanese"] != null) {
+                    if (streamListElement["Is Japanese"]) {
+                        selectedStreams += `${streamListElement["Stream Index"]} `;
+                        hasSelectedAudioStream = true;
+                    }
+                } else {
+                    console.log(`Ambiguous Audio Stream Detected: ${streamListElement["Full Details"]}.`);
+                    if (readLine.keyInYN("Do you want to include it?")) {
+                        selectedStreams += `${streamListElement["Stream Index"]} `;
+                        hasSelectedAudioStream = true;
+                    }
                 }
             } else {
                 console.log(`Ambiguous Stream Detected: ${streamListElement["Full Details"]}.`);
@@ -137,6 +155,9 @@ const generateAutoParamsFromFile = (sampleFile) => {
                 }
             }
         }
+    }
+    if (!hasSelectedAudioStream && firstAudioStreamIndex) {
+        selectedStreams += `${firstAudioStreamIndex}`;
     }
 
     let shouldSatisfy = true;
