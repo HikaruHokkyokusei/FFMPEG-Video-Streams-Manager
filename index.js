@@ -117,6 +117,7 @@ const generateAutoParamsFromFile = (sampleFile) => {
             console.log(stream["Full Details"]);
         }
     }
+    console.log("");
 
     let selectedStreams = "";
     for (const streamListElement of streamList) {
@@ -206,10 +207,22 @@ const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operat
     }
 };
 
+const printFilesRecursively = (inputFile, depth) => {
+    let prepend = "  ".repeat(depth);
+    let directoryContent = getDirectoryContent(inputFile);
+    for (const element of directoryContent) {
+        console.log(`${prepend}${element.name}`);
+        if (element.isDir) {
+            printFilesRecursively(inputFile + element.name + "/", depth + 1);
+        }
+    }
+};
+
 const preMain = async () => {
     try {
         // console.log(readLine.keyInYN("Do you want to include it?"));
         // console.log(getListOfStreams(`${baseInputFilePath + "inp.mkv"}`));
+        // printFilesRecursively(baseInputFilePath, 0);
     } catch (error) {
         console.error(error.message);
     }
