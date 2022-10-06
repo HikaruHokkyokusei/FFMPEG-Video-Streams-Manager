@@ -6,7 +6,8 @@
     ".ico": true,
     ".txt": true,
     ".srt": true,
-    ".ass": true
+    ".ass": true,
+    ".pdf": true
   },
   "preventDirectCopyOfNonSeasonFolders": false,
   "requireConfirmationWhileAutoSelectingStreams": false
