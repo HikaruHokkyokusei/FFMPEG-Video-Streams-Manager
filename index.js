@@ -13,6 +13,7 @@ const childProcess = require("child_process");
 const config = require("./config.json");
 
 const preventDirectCopyOfNonSeasonFolders = config["preventDirectCopyOfNonSeasonFolders"];
+const requireConfirmationWhileAutoSelectingStreams = config["requireConfirmationWhileAutoSelectingStreams"];
 const isStopWord = config["stopWords"];
 
 const executeCmdScript = (scriptParams, shouldPrint = true, shouldReturn = false, command = "ffmpeg -hide_banner ") => {
@@ -94,6 +95,7 @@ const getListOfStreams = (filePath) => {
             "Generic Stream Details": matches[0],
             "Stream Index": matches[1],
             "Is Japanese": (matches[2] === "(jpn)") ? true : ((matches[2] === "(eng)") ? false : null),
+            "Is Language Undefined": (matches[2] === "(und)"),
             "Stream Type": matches[3].toLowerCase(),
             "Stream Title": matches[4]
         };
@@ -105,9 +107,9 @@ const generateAutoParamsFromFile = (sampleFile) => {
     let streamList = getListOfStreams(sampleFile);
     let ffmpegNonFileParams = [
         "-map 0",
-        "-map -0:v",
+        // "-map -0:v",
         "-map -0:a",
-        "-map -0:s"
+        // "-map -0:s"
     ];
 
     console.log("Detected Streams: ");
@@ -120,56 +122,54 @@ const generateAutoParamsFromFile = (sampleFile) => {
     }
     console.log("");
 
-    let firstAudioStreamIndex = null, hasSelectedAudioStream = false;
-    let isFirstVideoStream = true;
-    let selectedStreams = "";
+    let hasSelectedAudioStream = false;
+    let selectedStreams = "", excludedStreams = "";
+    let currentAudioStreamIndex = 0;
 
     for (const streamListElement of streamList) {
         if (typeof streamListElement === "object") {
             if (streamListElement["Stream Type"] === "video") {
-                if (isFirstVideoStream) {
-                    selectedStreams += `${streamListElement["Stream Index"]} `;
-                    isFirstVideoStream = false;
-                }
+                // Info: In case someone wants to handle it differently...
             } else if (streamListElement["Stream Type"] === "subtitle") {
-                selectedStreams += `${streamListElement["Stream Index"]} `;
+                // Info: In case someone wants to handle it differently...
             } else if (streamListElement["Stream Type"] === "audio") {
-                if (!firstAudioStreamIndex) {
-                    firstAudioStreamIndex = streamListElement["Stream Index"];
-                }
-                if (streamListElement["Is Japanese"] != null) {
-                    if (streamListElement["Is Japanese"]) {
-                        selectedStreams += `${streamListElement["Stream Index"]} `;
-                        hasSelectedAudioStream = true;
-                    }
+                if (streamListElement["Is Japanese"]) {
+                    selectedStreams += `a:${currentAudioStreamIndex} `;
+                    hasSelectedAudioStream = true;
                 } else {
-                    console.log(`Ambiguous Audio Stream Detected: ${streamListElement["Full Details"]}.`);
-                    if (readLine.keyInYN("Do you want to include it?")) {
-                        selectedStreams += `${streamListElement["Stream Index"]} `;
-                        hasSelectedAudioStream = true;
-                    }
+                    excludedStreams += `a:${currentAudioStreamIndex} `;
                 }
+                currentAudioStreamIndex += 1;
             } else {
-                console.log(`Ambiguous Stream Detected: ${streamListElement["Full Details"]}.`);
-                if (readLine.keyInYN("Do you want to include it?")) {
-                    selectedStreams += `${streamListElement["Stream Index"]} `;
-                }
+                // Will never enter this block based on current regex.
+                // console.log(`Ambiguous Stream Detected: ${streamListElement["Full Details"]}.`);
+                // if (readLine.keyInYN("Do you want to include it?")) {
+                //     selectedStreams += `${streamListElement["Stream Index"]} `;
+                // } else {
+                //     excludedStreams += `${streamListElement["Stream Index"]} `;
+                // }
             }
         }
     }
-    if (!hasSelectedAudioStream && firstAudioStreamIndex) {
-        selectedStreams += `${firstAudioStreamIndex}`;
+    if (!hasSelectedAudioStream) {
+        selectedStreams += `a:0`;
+        excludedStreams = excludedStreams.replace(` a:0 `, " ");
     }
 
-    let shouldSatisfy = true;
+    let shouldSatisfy = requireConfirmationWhileAutoSelectingStreams;
+    console.log(`Currently Selected Streams: ${selectedStreams} (Streams that are not video or audio are auto included.)`);
+    console.log(`Excluded Streams: ${excludedStreams}`);
     while (shouldSatisfy) {
-        console.log(`Currently Selected Streams: ${selectedStreams} (Streams that are not video, audio or subtitles are auto included.)`);
         if (readLine.keyInYN("Are you satisfied with the currently selected streams?")) {
             shouldSatisfy = !shouldSatisfy;
         } else {
             selectedStreams = getInput("Manually enter the stream indexes to include (space seperated): ");
+            excludedStreams = "-";
+            console.log(`Currently Selected Streams: ${selectedStreams} (Streams that are not video or audio are auto included.)`);
+            console.log(`Excluded Streams: ${excludedStreams}`);
         }
     }
+    console.log("");
 
     for (let streamIndex of selectedStreams.trim().split(" ")) {
         ffmpegNonFileParams.push(`-map 0:${streamIndex}`);
@@ -197,23 +197,23 @@ const getDirectoryContent = (baseInputFilePath) => {
     });
 };
 const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operationFunction, ffmpegNonFileParams, currentDepth) => {
+    console.log("PWD: " + baseInputFilePath);
+    console.log("");
     let directoryContent = getDirectoryContent(baseInputFilePath);
-    let currentFfmpegNonFileParams = ffmpegNonFileParams;
 
     let lowerCasePath = baseInputFilePath.toLowerCase();
     let isSeasonDirectory = preventDirectCopyOfNonSeasonFolders ||
-        (lowerCasePath.lastIndexOf("/ova ") === -1 &&
+        (
+            lowerCasePath.lastIndexOf("/ova ") === -1 &&
             lowerCasePath.lastIndexOf("/ovas ") === -1 &&
-            lowerCasePath.lastIndexOf("/movie ") === -1 &&
-            lowerCasePath.lastIndexOf("/movies ") === -1 &&
             lowerCasePath.lastIndexOf("/extra ") === -1 &&
             lowerCasePath.lastIndexOf("/extras ") === -1 &&
             lowerCasePath.lastIndexOf("/special ") === -1 &&
-            lowerCasePath.lastIndexOf("/specials ") === -1);
+            lowerCasePath.lastIndexOf("/specials ") === -1
+        );
 
     for (const element of directoryContent) {
         if (currentDepth < 1 && element.isDir) {
-            console.log(`Folder --> ${element.name}`);
             if (!readLine.keyInYN("Do you want to continue?")) {
                 break;
             }
@@ -230,11 +230,9 @@ const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operat
             );
         } else {
             if (element.canProcess && isSeasonDirectory) {
-                if (!currentFfmpegNonFileParams) {
-                    currentFfmpegNonFileParams = generateAutoParamsFromFile(baseInputFilePath + element.name);
-                }
-                operationFunction(baseInputFilePath, element.name, currentFfmpegNonFileParams, baseOutputFilePath, element.name);
+                operationFunction(baseInputFilePath, element.name, generateAutoParamsFromFile(baseInputFilePath + element.name), baseOutputFilePath, element.name);
             } else {
+                console.log(`Directly Copying ${element.name}`);
                 fs.copyFileSync(baseInputFilePath + element.name, baseOutputFilePath + element.name, fs.constants.COPYFILE_EXCL);
             }
         }
@@ -256,7 +254,7 @@ const preMain = async () => {
     try {
         // console.log(readLine.keyInYN("Do you want to include it?"));
         // console.log(getListOfStreams(`${baseInputFilePath + "inp.mkv"}`));
-        // printFilesRecursively(baseInputFilePath, 0);
+        printFilesRecursively(baseInputFilePath, 0);
     } catch (error) {
         console.error(error.message);
     }
@@ -432,6 +430,12 @@ const main = async () => {
 main().then((success) => {
     console.log(`Script Ended with${(success) ? "out errors" : " error"}`);
 }).catch((err) => {
+    if (err.stdout) {
+        err.stdout = err.stdout.toString();
+    }
+    if (err.stderr) {
+        err.stderr = err.stderr.toString();
+    }
     console.log(err);
     console.log("Script Ended with Error");
 });

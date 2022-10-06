@@ -8,5 +8,6 @@
     ".srt": true,
     ".ass": true
   },
-  "preventDirectCopyOfNonSeasonFolders": false
+  "preventDirectCopyOfNonSeasonFolders": false,
+  "requireConfirmationWhileAutoSelectingStreams": false
 }
