@@ -153,7 +153,7 @@ const generateAutoParamsFromFile = (sampleFile) => {
     }
     if (!hasSelectedAudioStream) {
         selectedStreams += `a:0`;
-        excludedStreams = excludedStreams.replace(` a:0 `, " ");
+        excludedStreams = excludedStreams.replace(`a:0 `, " ");
     }
 
     let shouldSatisfy = requireConfirmationWhileAutoSelectingStreams;
@@ -213,9 +213,22 @@ const operateOnFilesRecursively = (baseInputFilePath, baseOutputFilePath, operat
         );
 
     for (const element of directoryContent) {
-        if (currentDepth < 1 && element.isDir) {
-            if (!readLine.keyInYN("Do you want to continue?")) {
-                break;
+        if (currentDepth < 1) {
+            console.log(`Current Element: ${element.name}`);
+            switch (readLine.keyInSelect(["Yes", "Skip this item and it's sub-items"], `Do you want to continue?`, {cancel: "Exit"})) {
+                case 0: {
+                    break;
+                }
+
+                case 1: {
+                    console.log("");
+                    continue;
+                }
+
+                case -1:
+                default: {
+                    return;
+                }
             }
             console.log("");
         }
