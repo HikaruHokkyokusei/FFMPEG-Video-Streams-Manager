@@ -1,6 +1,6 @@
 {
-  "baseInputFilePath": "./Files/Input/",
-  "baseOutputFilePath": "./Files/Output/",
+  "baseIpFilePath": "./Files/Input/",
+  "baseOpFilePath": "./Files/Output/",
   "stopWords": {
     ".ini": true,
     ".ico": true,

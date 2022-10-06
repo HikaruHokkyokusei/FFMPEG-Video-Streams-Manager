@@ -32,8 +32,8 @@ const executeCmdScript = (scriptParams, shouldPrint = true, shouldReturn = false
     }
 };
 
-const baseInputFilePath = config["baseInputFilePath"] + ((config["baseInputFilePath"].charAt(config["baseInputFilePath"].length - 1) !== "/") ? "/" : "");
-const baseOutputFilePath = config["baseOutputFilePath"] + ((config["baseOutputFilePath"].charAt(config["baseOutputFilePath"].length - 1) !== "/") ? "/" : "");
+const baseIpFilePath = config["baseIpFilePath"] + ((config["baseIpFilePath"].charAt(config["baseIpFilePath"].length - 1) !== "/") ? "/" : "");
+const baseOpFilePath = config["baseOpFilePath"] + ((config["baseOpFilePath"].charAt(config["baseOpFilePath"].length - 1) !== "/") ? "/" : "");
 
 const menuOptions = [
     "Execute Pre-main function",
@@ -253,8 +253,8 @@ const printFilesRecursively = (inputFile, depth) => {
 const preMain = async () => {
     try {
         // console.log(readLine.keyInYN("Do you want to include it?"));
-        // console.log(getListOfStreams(`${baseInputFilePath + "inp.mkv"}`));
-        printFilesRecursively(baseInputFilePath, 0);
+        // console.log(getListOfStreams(`${baseIpFilePath + "inp.mkv"}`));
+        printFilesRecursively(baseIpFilePath, 0);
     } catch (error) {
         console.error(error.message);
     }
@@ -262,7 +262,7 @@ const preMain = async () => {
 const main = async () => {
     console.log("Script started");
     console.log("Ensure that FFMPEG is installed and is set in the env. path variables.\n");
-    console.log(`Based on the config file, i/p files needs to be in "${baseInputFilePath}" and o/p. files will be stored in "${baseOutputFilePath}"\n`);
+    console.log(`Based on the config file, i/p files needs to be in "${baseIpFilePath}" and o/p. files will be stored in "${baseOpFilePath}"\n`);
 
     while (true) {
         let choice = showMenu();
@@ -279,15 +279,15 @@ const main = async () => {
 
             case 1: {
                 let userCommand = getInput("Enter command: ");
-                userCommand = userCommand.replaceAll("$iB$/", baseInputFilePath);
-                userCommand = userCommand.replaceAll("$oB$/", baseOutputFilePath);
+                userCommand = userCommand.replaceAll("$iB$/", baseIpFilePath);
+                userCommand = userCommand.replaceAll("$oB$/", baseOpFilePath);
                 executeCmdScript([userCommand], true, false, "");
                 continue;
             }
 
             case 2: {
                 inputFilePath = getInput("Enter file name: ");
-                executeCmdScript(['-i', `"${baseInputFilePath}${inputFilePath}"`, '2>&1', '|', 'find', '"Stream"']);
+                executeCmdScript(['-i', `"${baseIpFilePath}${inputFilePath}"`, '2>&1', '|', 'find', '"Stream"']);
                 continue;
             }
 
@@ -401,7 +401,7 @@ const main = async () => {
                 let sampleFile = null;
                 [inputFilePath, outputFilePath] = getFileNamesFromUser();
                 if (inputFilePath !== "*") {
-                    sampleFile = baseInputFilePath + inputFilePath;
+                    sampleFile = baseIpFilePath + inputFilePath;
                     ffmpegNonFileParams = generateAutoParamsFromFile(sampleFile);
                 }
                 break;
@@ -414,11 +414,11 @@ const main = async () => {
         }
 
         if (inputFilePath !== "*") {
-            executeGenericFfmpegScript(baseInputFilePath, inputFilePath, ffmpegNonFileParams, baseOutputFilePath, outputFilePath);
+            executeGenericFfmpegScript(baseIpFilePath, inputFilePath, ffmpegNonFileParams, baseOpFilePath, outputFilePath);
         } else {
             operateOnFilesRecursively(
-                baseInputFilePath,
-                baseOutputFilePath,
+                baseIpFilePath,
+                baseOpFilePath,
                 executeGenericFfmpegScript,
                 ffmpegNonFileParams,
                 0
