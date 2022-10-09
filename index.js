@@ -157,15 +157,15 @@ const generateAutoParamsFromFile = (sampleFile) => {
     }
 
     let shouldSatisfy = requireConfirmationWhileAutoSelectingStreams;
-    console.log(`Currently Selected Streams: ${selectedStreams} (Streams that are not video or audio are auto included.)`);
+    console.log(`Selected Streams: ${selectedStreams} (Streams that are not video or audio are auto included.)`);
     console.log(`Excluded Streams: ${excludedStreams}`);
     while (shouldSatisfy) {
-        if (readLine.keyInYN("Are you satisfied with the currently selected streams?")) {
+        if (readLine.keyInYN("Are you satisfied with the selected streams?")) {
             shouldSatisfy = !shouldSatisfy;
         } else {
             selectedStreams = getInput("Manually enter the stream indexes to include (space seperated): ");
             excludedStreams = "-";
-            console.log(`Currently Selected Streams: ${selectedStreams} (Streams that are not video or audio are auto included.)`);
+            console.log(`Selected Streams: ${selectedStreams} (Streams that are not video or audio are auto included.)`);
             console.log(`Excluded Streams: ${excludedStreams}`);
         }
     }
