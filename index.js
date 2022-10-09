@@ -47,7 +47,8 @@ const menuOptions = [
     "Remove specific subtitle and audio streams",
     "Keep specific streams only",
     "Remove specific streams",
-    "Auto: Keep only Japanese audio streams (Read README.md)"
+    "Auto: Keep only Japanese audio streams (Read README.md)",
+    "Delete Desktop.ini & .ico file recursively"
 ];
 const showMenu = () => {
     console.log("Menu: -");
@@ -72,6 +73,20 @@ const getFileNamesFromUser = () => {
     }
 
     return [inputFilePath, outputFilePath];
+};
+
+const deleteIcoAndDesktopIniFilesRecursively = (baseIpFilePath, depth = 0) => {
+    let directoryContent = getDirectoryContent(baseIpFilePath);
+
+    for (const element of directoryContent) {
+        let lowerCaseName = element.name.toLowerCase();
+        if (element.isDir) {
+            deleteIcoAndDesktopIniFilesRecursively(`${baseIpFilePath + element.name}/`, depth + 1);
+        } else if (lowerCaseName === "desktop.ini" || lowerCaseName.endsWith(".ico")) {
+            console.log(`Deleting: ${baseIpFilePath + element.name}`);
+            fs.rmSync(`${baseIpFilePath + element.name}`);
+        }
+    }
 };
 
 const getListOfStreams = (filePath) => {
@@ -177,11 +192,11 @@ const generateAutoParamsFromFile = (sampleFile) => {
 
     return ffmpegNonFileParams;
 };
-const executeGenericFfmpegScript = (baseInputFilePath, inputFilePath, ffmpegNonFIleParams, baseOutputFilePath, outputFilePath) => {
+const executeGenericFfmpegScript = (baseInputFilePath, inputFilePath, ffmpegNonFileParams, baseOutputFilePath, outputFilePath) => {
     if (outputFilePath === "*") {
         outputFilePath = inputFilePath;
     }
-    executeCmdScript([`-i "${baseInputFilePath + inputFilePath}"`, ...ffmpegNonFIleParams, `-c copy "${baseOutputFilePath + outputFilePath}"`]);
+    executeCmdScript([`-i "${baseInputFilePath + inputFilePath}"`, ...ffmpegNonFileParams, `-c copy "${baseOutputFilePath + outputFilePath}"`]);
 };
 
 const getDirectoryContent = (baseInputFilePath) => {
@@ -418,6 +433,15 @@ const main = async () => {
                     ffmpegNonFileParams = generateAutoParamsFromFile(sampleFile);
                 }
                 break;
+            }
+
+            case 12: {
+                let baseDir = getInput("Enter Base Directory Location: ");
+                if (!baseDir.endsWith("/")) {
+                    baseDir += "/";
+                }
+                deleteIcoAndDesktopIniFilesRecursively(baseDir);
+                continue;
             }
 
             case -1:
